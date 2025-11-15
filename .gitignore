@@ -1,0 +1,22 @@
+# Secrets
+.env
+app/firebase/*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+env/
+.venv/
+
+# Logs
+*.log
+
+# Editor/IDE
+.vscode/
+.idea/
+

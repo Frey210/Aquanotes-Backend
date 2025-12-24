@@ -336,7 +336,7 @@ erDiagram
 flowchart TD
   A[Factory/Admin] -->|POST /admin/devices + X-API-Key| B[Device UID registered]
   B --> C[Device unassigned]
-  C -->|POST /devices (auth)| D[User claims device]
+  C -->|POST /devices - auth| D[User claims device]
   D -->|Optional| E[Assign device to kolam]
 ```
 

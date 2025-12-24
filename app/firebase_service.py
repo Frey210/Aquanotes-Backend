@@ -6,17 +6,25 @@ import os
 
 logger = logging.getLogger(__name__)
 
+
+def _resolve_credential_path() -> str:
+    env_path = os.getenv("FIREBASE_CREDENTIALS")
+    if env_path:
+        return env_path
+    # fallback to legacy location for backwards compatibility
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(current_dir, "firebase", "aqua-notes-firebase-adminsdk-fbsvc-6de08d39b2.json")
+
+
 def initialize_firebase():
     try:
         if not firebase_admin._apps:
-            # Path ke file service account
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            cred_path = os.path.join(current_dir, 'firebase', 'aqua-notes-firebase-adminsdk-fbsvc-6de08d39b2.json')
-            
+            cred_path = _resolve_credential_path()
+
             if not os.path.exists(cred_path):
                 logger.error("Firebase service account file not found")
                 return False
-                
+
             cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred)
             logger.info("Firebase app initialized")
@@ -24,6 +32,7 @@ def initialize_firebase():
     except Exception as e:
         logger.error(f"Error initializing Firebase: {str(e)}")
         return False
+
 
 # Inisialisasi saat modul dimuat
 initialize_firebase()

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aquanotes-api
+  namespace: aquanotes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aquanotes-api
+  template:
+    metadata:
+      labels:
+        app: aquanotes-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/your-org/aquanotes-api:arm64
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: aquanotes-api-secret
+          volumeMounts:
+            - name: firebase-credentials
+              mountPath: /app/app/firebase/serviceAccount.json
+              subPath: serviceAccount.json
+          readinessProbe:
+            httpGet:
+              path: /docs
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: firebase-credentials
+          secret:
+            secretName: firebase-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aquanotes-api
+  namespace: aquanotes
+spec:
+  selector:
+    app: aquanotes-api
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

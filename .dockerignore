@@ -1,0 +1,14 @@
+.venv
+__pycache__
+*.py[cod]
+*.sqlite3
+*.db
+.git
+.gitignore
+.mypy_cache
+.pytest_cache
+.DS_Store
+aquanotes.db
+.env
+.env.*
+*.log

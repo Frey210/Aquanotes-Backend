@@ -54,9 +54,37 @@ def remove_device(
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     
-    # Reset kepemilikan device
+    # Lepas relasi kolam agar device bisa dipakai ulang
+    kolam = db.query(models.Kolam).filter(
+        models.Kolam.device_id == device.id
+    ).first()
+    if kolam:
+        kolam.device_id = None
+        db.add(kolam)
+
+    # Hapus histori terkait device
+    db.query(models.SensorData).filter(
+        models.SensorData.device_id == device.id
+    ).delete()
+    db.query(models.Notification).filter(
+        models.Notification.device_id == device.id
+    ).delete()
+
+    # Reset device menjadi kondisi awal agar bisa di-claim user lain
     device.user_id = None
     device.name = None
+    device.last_seen = None
+    device.status = "offline"
+    device.connection_interval = 5
+    device.temp_min_threshold = None
+    device.temp_max_threshold = None
+    device.ph_min_threshold = None
+    device.ph_max_threshold = None
+    device.do_min_threshold = None
+    device.tds_max_threshold = None
+    device.ammonia_max_threshold = None
+    device.salinitas_min_threshold = None
+    device.salinitas_max_threshold = None
     db.commit()
     
     return {"message": "Device removed successfully"}

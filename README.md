@@ -58,7 +58,6 @@ app/
   schemas.py            # Pydantic request and response models
   routers/              # Route modules (admin, users, devices, tambak, kolam, sensor, monitoring, export, notifications, device_threshold)
 generate_db.py          # one-off script to create schema
-aquanotes.db            # legacy SQLite database (sample data for migration)
 requirements.txt
 ```
 
@@ -426,4 +425,3 @@ uvicorn app.main:app --reload
 
 ## Deployment Notes
 - Docker, Docker Compose, and Kubernetes manifests are provided in `Dockerfile`, `docker-compose.yml`, and `k8s/`.
-- `migrate_sqlite_to_postgres.py` can copy data from `aquanotes.db` into PostgreSQL.

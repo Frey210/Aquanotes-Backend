@@ -13,6 +13,8 @@ def create_kolam(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot create kolam")
     # Validasi kepemilikan tambak
     tambak = db.query(models.Tambak).filter(
         models.Tambak.id == kolam.tambak_id,
@@ -44,6 +46,8 @@ def get_kolam(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot view kolam")
     return db.query(models.Kolam).join(models.Tambak).filter(
         models.Tambak.user_id == current_user.id,
         models.Kolam.tambak_id == tambak_id
@@ -55,6 +59,8 @@ def delete_kolam(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot delete kolam")
     kolam = db.query(models.Kolam).join(models.Tambak).filter(
         models.Kolam.id == kolam_id,
         models.Tambak.user_id == current_user.id
@@ -83,6 +89,8 @@ def update_kolam(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot update kolam")
     # Dapatkan kolam yang akan diupdate
     db_kolam = db.query(models.Kolam).filter(
         models.Kolam.id == kolam_id,

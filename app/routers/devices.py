@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status  
 from sqlalchemy.orm import Session
+from datetime import datetime
 from app import models, schemas, database, auth
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -13,6 +14,8 @@ def add_device(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     # Cek apakah device ada di database
     db_device = db.query(models.Device).filter(models.Device.uid == device.uid).first()
     
@@ -38,6 +41,8 @@ def get_devices(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     return db.query(models.Device).filter(models.Device.user_id == current_user.id).all()
 
 @router.delete("/{device_uid}")
@@ -46,6 +51,8 @@ def remove_device(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     device = db.query(models.Device).filter(
         models.Device.uid == device_uid,
         models.Device.user_id == current_user.id
@@ -101,6 +108,8 @@ def update_device(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     device = db.query(models.Device).filter(
         models.Device.id == device_id,
         models.Device.user_id == current_user.id
@@ -134,6 +143,8 @@ def move_device_to_kolam(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     # Dapatkan device yang akan dipindahkan
     device = db.query(models.Device).filter(
         models.Device.id == device_id,
@@ -189,6 +200,8 @@ def get_devices_status(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     devices = db.query(models.Device).filter(
         models.Device.user_id == current_user.id
     ).all()
@@ -215,6 +228,8 @@ def set_maintenance_mode(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     device = db.query(models.Device).filter(
         models.Device.id == device_id,
         models.Device.user_id == current_user.id
@@ -236,6 +251,8 @@ def set_online_mode(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     device = db.query(models.Device).filter(
         models.Device.id == device_id,
         models.Device.user_id == current_user.id
@@ -259,6 +276,8 @@ def update_connection_interval(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot own devices")
     if interval < 1 or interval > 60:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

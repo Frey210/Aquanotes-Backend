@@ -14,6 +14,12 @@ from app.routers import (
 )
 from app.background_tasks import start_background_task
 from app.database import engine, Base
+from app.migrations import (
+    ensure_user_role_column,
+    ensure_user_notification_cooldown_column,
+    ensure_device_is_active_column,
+    ensure_device_deactivate_at_column
+)
 import logging
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -50,6 +56,10 @@ app.include_router(notifications.router)
 async def startup_event():
     # Buat semua tabel
     Base.metadata.create_all(bind=engine)
+    ensure_user_role_column(engine)
+    ensure_user_notification_cooldown_column(engine)
+    ensure_device_is_active_column(engine)
+    ensure_device_deactivate_at_column(engine)
     
     # Jalankan background tasks
     start_background_task()

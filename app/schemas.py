@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, validator
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Literal
 from datetime import datetime, date
 
 class UserCreate(BaseModel):
@@ -15,8 +15,22 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: EmailStr
+    role: Literal["admin", "operator", "viewer"]
+    created_at: datetime
+    fcm_token: Optional[str] = None
+    notification_cooldown_minutes: Optional[int] = None
     
     model_config = ConfigDict(from_attributes=True)
+
+class UserAdminCreate(UserCreate):
+    role: Literal["admin", "operator", "viewer"] = "operator"
+
+class UserAdminUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(None, min_length=6)
+    role: Optional[Literal["admin", "operator", "viewer"]] = None
+    notification_cooldown_minutes: Optional[int] = Field(None, ge=1, le=1440)
 
 class Token(BaseModel):
     access_token: str
@@ -34,6 +48,8 @@ class DeviceResponse(BaseModel):
     uid: str
     name: Optional[str] = None
     user_id: Optional[int] = None
+    is_active: Optional[bool] = None
+    deactivate_at: Optional[datetime] = None
     status: Optional[str] = None
     last_seen: Optional[datetime] = None
     connection_interval: Optional[int] = None
@@ -143,8 +159,32 @@ class AdminDeviceResponse(BaseModel):
     user_id: Optional[int] = None
     user_name: Optional[str] = None
     registered: bool
+    status: Optional[str] = None
+    last_seen: Optional[datetime] = None
+    is_active: Optional[bool] = None
+    deactivate_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
+
+class AdminOverview(BaseModel):
+    total_users: int
+    total_devices: int
+    total_tambak: int
+    total_kolam: int
+    total_notifications: int
+    online_devices: int
+    offline_devices: int
+    maintenance_devices: int
+    inactive_devices: int
+    database_ok: bool
+
+class AdminDeviceStatusUpdate(BaseModel):
+    status: Literal["online", "offline", "maintenance"]
+
+class AdminDeviceDeactivateSchedule(BaseModel):
+    deactivate_at: Optional[datetime] = Field(
+        None, description="Datetime UTC untuk auto-deactivate (null untuk reset)"
+    )
 
 class ThresholdSettings(BaseModel):
     temp_min: Optional[float] = Field(None, ge=0, description="Minimum temperature threshold in °C")
@@ -183,6 +223,9 @@ class UserProfileUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=100, description="Nama baru")
     old_password: Optional[str] = Field(None, min_length=6, description="Password saat ini")
     new_password: Optional[str] = Field(None, min_length=6, description="Password baru")
+    notification_cooldown_minutes: Optional[int] = Field(
+        None, ge=1, le=1440, description="Cooldown notifikasi dalam menit"
+    )
     
     # Validasi: Jika ingin ganti password, harus sertakan old_password
     @validator('new_password')
@@ -190,17 +233,6 @@ class UserProfileUpdate(BaseModel):
         if v and 'old_password' not in values:
             raise ValueError("Old password is required when changing password")
         return v
-
-# Tambahkan field fcm_token di UserResponse jika belum ada
-class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: EmailStr
-    created_at: datetime
-    fcm_token: Optional[str] = None  # Tambahkan ini jika belum ada
-    
-    class Config:
-        from_attributes = True
 
 class ExportRequest(BaseModel):
     device_id: int

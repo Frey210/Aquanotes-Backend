@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, date
 from app import models, schemas, database
 from typing import List, Optional
 
@@ -20,6 +20,14 @@ def create_sensor_data(
     
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
+    if device.deactivate_at and device.deactivate_at <= datetime.utcnow():
+        device.is_active = False
+        device.status = "offline"
+        device.last_seen = None
+        db.add(device)
+        db.commit()
+    if device.is_active is False:
+        raise HTTPException(status_code=403, detail="Device is inactive")
     
     try:
         # Parse timestamp dari device TANPA konversi timezone
@@ -62,7 +70,13 @@ from app.auth import get_current_user
 
 @router.get("/", response_model=List[schemas.SensorDataResponse])
 def get_sensor_data(
+    response: Response,
     uid: str = Query(..., description="UID perangkat"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=5000),
+    sort_dir: Optional[str] = Query("desc"),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)  # Verifikasi token
 ):
@@ -84,8 +98,27 @@ def get_sensor_data(
         )
 
     # 2. Query data
-    sensor_data = db.query(models.SensorData).filter(
+    query = db.query(models.SensorData).filter(
         models.SensorData.device_id == device.id
-    ).all()
+    )
+
+    if start_date:
+        query = query.filter(
+            models.SensorData.timestamp >= datetime.combine(start_date, datetime.min.time())
+        )
+    if end_date:
+        query = query.filter(
+            models.SensorData.timestamp <= datetime.combine(end_date, datetime.max.time())
+        )
+
+    total = query.count()
+    response.headers["X-Total-Count"] = str(total)
+
+    if sort_dir == "asc":
+        query = query.order_by(models.SensorData.timestamp.asc())
+    else:
+        query = query.order_by(models.SensorData.timestamp.desc())
+
+    sensor_data = query.offset(skip).limit(limit).all()
 
     return sensor_data

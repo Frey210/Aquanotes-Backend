@@ -61,3 +61,15 @@ def get_current_user(
     except Exception as e:
         print(f"Authentication error: {str(e)}")
         raise credentials_exception
+
+
+def require_roles(*roles: str):
+    def role_checker(current_user: models.User = Depends(get_current_user)) -> models.User:
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions"
+            )
+        return current_user
+
+    return role_checker

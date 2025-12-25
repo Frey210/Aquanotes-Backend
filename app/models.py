@@ -10,8 +10,10 @@ class User(Base):
     name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default="operator")
     created_at = Column(DateTime, default=datetime.utcnow)
     fcm_token = Column(String(255), nullable=True)
+    notification_cooldown_minutes = Column(Integer, default=30)
     
     devices = relationship("Device", back_populates="owner")
     tambaks = relationship("Tambak", back_populates="owner")
@@ -51,6 +53,8 @@ class Device(Base):
     uid = Column(String(36), unique=True, nullable=False)
     name = Column(String(100), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    is_active = Column(Boolean, default=True)
+    deactivate_at = Column(DateTime, nullable=True)
     
     # Threshold settings
     temp_min_threshold = Column(Float, nullable=True)

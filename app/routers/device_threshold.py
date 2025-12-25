@@ -76,3 +76,33 @@ def get_device_thresholds(
         "device_name": device.name,
         **thresholds
     }
+
+@router.delete("/{device_id}/thresholds", status_code=status.HTTP_204_NO_CONTENT)
+def reset_device_thresholds(
+    device_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    device = db.query(models.Device).filter(
+        models.Device.id == device_id,
+        models.Device.user_id == current_user.id
+    ).first()
+
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Device not found or not owned by user"
+        )
+
+    device.temp_min_threshold = None
+    device.temp_max_threshold = None
+    device.ph_min_threshold = None
+    device.ph_max_threshold = None
+    device.do_min_threshold = None
+    device.tds_max_threshold = None
+    device.ammonia_max_threshold = None
+    device.salinitas_min_threshold = None
+    device.salinitas_max_threshold = None
+
+    db.commit()
+    return None

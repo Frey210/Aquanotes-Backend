@@ -13,6 +13,8 @@ def create_tambak(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot create tambak")
     try:
         new_tambak = models.Tambak(
             **tambak.dict(exclude_unset=True),
@@ -34,6 +36,8 @@ def get_tambak(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot view tambak")
     return db.query(models.Tambak).filter(
         models.Tambak.user_id == current_user.id
     ).all()
@@ -44,6 +48,8 @@ def delete_tambak(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot delete tambak")
     tambak = db.query(models.Tambak).filter(
         models.Tambak.id == tambak_id,
         models.Tambak.user_id == current_user.id
@@ -73,6 +79,8 @@ def update_tambak(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin cannot update tambak")
     tambak = db.query(models.Tambak).filter(
         models.Tambak.id == tambak_id,
         models.Tambak.user_id == current_user.id

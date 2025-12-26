@@ -1,7 +1,7 @@
 import time
 import threading
 import logging
-from datetime import datetime, timedelta  # PERBAIKAN: Tambahkan import datetime
+from datetime import datetime, timedelta, timezone  # PERBAIKAN: Tambahkan import datetime
 from sqlalchemy.orm import Session
 from app import models
 from app.database import SessionLocal
@@ -164,13 +164,16 @@ def check_device_status():
     while True:
         try:
             db = SessionLocal()
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             devices = db.query(models.Device).filter(
                 models.Device.is_active == True
             ).all()
             for device in devices:
-                if device.deactivate_at and device.deactivate_at <= now:
+                deactivate_at = device.deactivate_at
+                if deactivate_at and deactivate_at.tzinfo is None:
+                    deactivate_at = deactivate_at.replace(tzinfo=timezone.utc)
+                if deactivate_at and deactivate_at <= now:
                     device.is_active = False
                     device.status = "offline"
                     device.last_seen = None
@@ -180,12 +183,14 @@ def check_device_status():
                     continue
                 
                 # PERBAIKAN: Handle None untuk last_seen
-                last_seen = device.last_seen or datetime.min
+                last_seen = device.last_seen or datetime.min.replace(tzinfo=timezone.utc)
                 
                 # Hitung threshold dinamis
                 threshold_minutes = device.connection_interval * 2
                 threshold = now - timedelta(minutes=threshold_minutes)
                 
+                if last_seen.tzinfo is None:
+                    last_seen = last_seen.replace(tzinfo=timezone.utc)
                 if last_seen < threshold:
                     if device.status != 'offline':
                         old_status = device.status

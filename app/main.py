@@ -21,6 +21,7 @@ from app.migrations import (
     ensure_device_deactivate_at_column
 )
 import logging
+import os
 from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = logging.getLogger(__name__)
@@ -30,11 +31,21 @@ app = FastAPI(title="AquaNotes API", version="2.0.0")
 # Prometheus Instrumentation
 Instrumentator().instrument(app).expose(app)
 
+def _get_cors_origins():
+    raw = os.getenv("CORS_ORIGINS", "")
+    if raw.strip():
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return [
+        "https://aquanotes-web.inkubasistartupunhas.id",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_get_cors_origins(),
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

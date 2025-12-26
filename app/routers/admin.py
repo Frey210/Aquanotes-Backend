@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 import os
 from app import models, schemas, database
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from app.auth import require_roles
 from sqlalchemy import func, text
 
@@ -277,13 +277,17 @@ def admin_schedule_deactivation(
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
 
-    if payload.deactivate_at is not None and payload.deactivate_at <= datetime.utcnow():
-        raise HTTPException(
-            status_code=400,
-            detail="deactivate_at must be in the future (UTC)"
-        )
+    deactivate_at = payload.deactivate_at
+    if deactivate_at is not None:
+        if deactivate_at.tzinfo is None:
+            deactivate_at = deactivate_at.replace(tzinfo=timezone.utc)
+        if deactivate_at <= datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=400,
+                detail="deactivate_at must be in the future (UTC)"
+            )
 
-    device.deactivate_at = payload.deactivate_at
+    device.deactivate_at = deactivate_at
     db.commit()
     db.refresh(device)
 

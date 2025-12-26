@@ -190,3 +190,17 @@ Jika expose ke publik, arahkan `api.<domain>` ke Service `aquanotes-api` melalui
 ## Observability
 - `/metrics` untuk Prometheus.
 - Log aplikasi standard output (gunakan `kubectl logs`).
+
+## Monitoring & Alerting
+- Prometheus: `https://prometheus.inkubasistartupunhas.id`
+- Grafana: `https://grafana.inkubasistartupunhas.id`
+- Alertmanager: `https://alertmanager.inkubasistartupunhas.id`
+
+Telegram alerting & bot:
+- Group: Aquanotes Server Alert System
+- Bot commands: `/status`, `/pods`, `/alerts`, `/help`
+
+## Database Admin (pgAdmin)
+- URL: `https://aquanotes-pgadmin.inkubasistartupunhas.id`
+- Credentials diset via Secret `db-tools/pgadmin-admin`.
+- Server pre-registration diset via Secret `db-tools/pgadmin-servers`.
